@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 interface Metric {
   name: string;
@@ -56,31 +56,86 @@ export function MetricsPanel() {
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+
     async function load() {
+      if (document.hidden) return;
       try {
         const res = await fetch(`${apiBase}/metrics`, { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const text = await res.text();
-        setMetrics(parsePrometheus(text));
+        if (mounted) {
+          setMetrics(parsePrometheus(text));
+          setError(null);
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erro ao carregar');
+        if (mounted) {
+          setError(err instanceof Error ? err.message : 'Erro ao carregar');
+        }
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
+
     load();
-    const interval = setInterval(load, 15000);
-    return () => clearInterval(interval);
+
+    function startInterval() {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = setInterval(load, 15000);
+    }
+    function stopInterval() {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+
+    startInterval();
+
+    function onVisibility() {
+      if (document.hidden) {
+        stopInterval();
+      } else {
+        load();
+        startInterval();
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      mounted = false;
+      stopInterval();
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, []);
 
-  if (loading) return <p className="text-neutral-400">Carregando metricas...</p>;
+  if (loading)
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-24 rounded-2xl border border-line bg-surface skeleton"
+            />
+          ))}
+        </div>
+        <div className="h-64 rounded-2xl border border-line bg-surface skeleton" />
+      </div>
+    );
+
   if (error)
     return (
-      <div className="rounded border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
+      <div
+        role="alert"
+        aria-live="assertive"
+        className="rounded-xl border border-danger/30 bg-danger/10 p-4 text-sm text-danger"
+      >
         Nao foi possivel carregar as metricas: {error}
-        <p className="mt-2 text-xs text-neutral-400">
+        <p className="mt-2 text-xs text-muted">
           Verifique se a API esta rodando em {apiBase} e se CORS esta
           habilitado.
         </p>
@@ -100,60 +155,67 @@ export function MetricsPanel() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-live="polite">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
-          <p className="text-sm text-neutral-400">Requisicoes totais</p>
-          <p className="mt-1 text-2xl font-semibold">
+        <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
+          <h3 className="text-sm font-medium text-muted">Requisicoes totais</h3>
+          <p className="mt-1 text-2xl font-semibold tabular-nums">
             {Math.round(sumValues(httpTotal)).toLocaleString('pt-BR')}
           </p>
         </div>
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
-          <p className="text-sm text-neutral-400">Erros HTTP</p>
-          <p className="mt-1 text-2xl font-semibold text-red-400">
+        <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
+          <h3 className="text-sm font-medium text-muted">Erros HTTP</h3>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-danger">
             {Math.round(sumValues(httpErrors)).toLocaleString('pt-BR')}
           </p>
         </div>
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
-          <p className="text-sm text-neutral-400">Pedidos criados</p>
-          <p className="mt-1 text-2xl font-semibold text-violet-400">
+        <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
+          <h3 className="text-sm font-medium text-muted">Pedidos criados</h3>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-accent">
             {Math.round(sumValues(ordersCreated)).toLocaleString('pt-BR')}
           </p>
         </div>
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
-          <p className="text-sm text-neutral-400">Pagamentos processados</p>
-          <p className="mt-1 text-2xl font-semibold text-green-400">
+        <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
+          <h3 className="text-sm font-medium text-muted">
+            Pagamentos processados
+          </h3>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-success">
             {Math.round(sumValues(paymentsProcessed)).toLocaleString('pt-BR')}
           </p>
         </div>
       </div>
 
-      <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
+      <div className="rounded-2xl border border-line bg-surface p-6 shadow-card">
         <h2 className="mb-4 text-lg font-semibold">Todas as metricas</h2>
         <div className="space-y-4">
           {metrics.map((m) => (
-            <div key={m.name} className="border-b border-neutral-800 pb-3 last:border-0">
-              <div className="flex items-baseline justify-between">
-                <span className="font-mono text-sm font-medium">{m.name}</span>
-                <span className="text-xs text-neutral-500">{m.type}</span>
+            <div
+              key={m.name}
+              className="border-b border-line pb-3 last:border-0"
+            >
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="font-mono text-sm font-medium">
+                  {m.name}
+                </span>
+                <span className="text-xs text-muted">{m.type}</span>
               </div>
-              <p className="mt-0.5 text-xs text-neutral-500">{m.help}</p>
-              <div className="mt-2 max-h-32 overflow-auto font-mono text-xs text-neutral-400">
+              <p className="mt-0.5 text-xs text-muted">{m.help}</p>
+              <div className="mt-2 max-h-32 overflow-auto font-mono text-xs text-muted">
                 {m.values.slice(0, 20).map((v, i) => (
                   <div key={i}>
                     {Object.keys(v.labels).length > 0 && (
-                      <span className="text-neutral-500">
+                      <span className="text-faint">
                         {Object.entries(v.labels)
                           .map(([k, val]) => `${k}=${val}`)
                           .join(', ')}
                         {'  '}
                       </span>
                     )}
-                    <span className="text-neutral-200">{v.value}</span>
+                    <span className="text-ink tabular-nums">{v.value}</span>
                   </div>
                 ))}
                 {m.values.length > 20 && (
-                  <p className="text-neutral-600">
+                  <p className="text-faint">
                     ... e mais {m.values.length - 20} series
                   </p>
                 )}

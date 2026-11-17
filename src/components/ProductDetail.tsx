@@ -11,40 +11,67 @@ export function ProductDetail({ product }: { product: Product }) {
   const [added, setAdded] = useState(false);
 
   return (
-    <div className="grid gap-8 md:grid-cols-2">
-      <div className="flex aspect-square items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900 text-8xl">
-        <span aria-hidden>🛍️</span>
+    <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-surface-2 to-surface">
+        <span
+          aria-hidden
+          className="text-5xl font-semibold tracking-tight text-accent/70 sm:text-6xl lg:text-7xl"
+        >
+          {product.name.trim().slice(0, 2).toUpperCase()}
+        </span>
       </div>
-      <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-semibold">{product.name}</h1>
-          <p className="mt-1 text-sm text-neutral-400">SKU {product.sku}</p>
+      <div className="flex flex-col gap-5">
+        <div className="space-y-2">
+          <span className="inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface-2 px-3 py-1 text-xs font-medium text-muted">
+            <span
+              aria-hidden
+              className={`h-1.5 w-1.5 rounded-full ${
+                product.stock === 0 ? 'bg-danger' : 'bg-success'
+              }`}
+            />
+            {product.stock === 0
+              ? 'Sem estoque'
+              : `${product.stock} em estoque`}
+          </span>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            {product.name}
+          </h1>
+          <p className="font-mono text-sm text-faint">SKU {product.sku}</p>
         </div>
-        <p className="text-3xl font-bold text-violet-400">
+
+        <p className="text-2xl font-semibold text-accent sm:text-3xl">
           {formatBRL(product.price)}
         </p>
-        {product.description && (
-          <p className="text-neutral-300">{product.description}</p>
-        )}
-        <p className="text-sm text-neutral-400">
-          Estoque disponivel:{' '}
-          <span className="font-medium text-neutral-200">{product.stock}</span>
-        </p>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center rounded border border-neutral-700">
+        {product.description && (
+          <p className="text-muted leading-relaxed">{product.description}</p>
+        )}
+
+        <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div
+            role="group"
+            aria-label="Quantidade do produto"
+            className="flex items-center rounded-xl border border-line bg-surface"
+          >
             <button
               type="button"
+              aria-label="Diminuir quantidade"
               onClick={() => setQty((q) => Math.max(1, q - 1))}
-              className="px-3 py-1.5 text-lg hover:bg-neutral-800"
+              className="flex h-11 w-11 items-center justify-center text-lg transition hover:text-accent"
             >
               -
             </button>
-            <span className="w-10 text-center">{qty}</span>
+            <span
+              className="min-w-[3rem] text-center font-medium tabular-nums"
+              aria-live="polite"
+            >
+              {qty}
+            </span>
             <button
               type="button"
+              aria-label="Aumentar quantidade"
               onClick={() => setQty((q) => Math.min(product.stock, q + 1))}
-              className="px-3 py-1.5 text-lg hover:bg-neutral-800"
+              className="flex h-11 w-11 items-center justify-center text-lg transition hover:text-accent"
             >
               +
             </button>
@@ -65,15 +92,21 @@ export function ProductDetail({ product }: { product: Product }) {
               setAdded(true);
               setTimeout(() => setAdded(false), 1500);
             }}
-            className="flex-1 rounded bg-violet-600 px-4 py-2 font-medium text-white hover:bg-violet-500 disabled:opacity-40"
+            className="flex min-h-[48px] flex-1 items-center justify-center rounded-xl bg-accent px-5 font-medium text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-faint"
           >
             {product.stock === 0
               ? 'Sem estoque'
               : added
-                ? 'Adicionado ao carrinho'
+                ? 'Adicionado ao carrinho ✓'
                 : 'Adicionar ao carrinho'}
           </button>
         </div>
+        {added && (
+          <span role="status" aria-live="polite" className="sr-only">
+            {qty} {qty === 1 ? 'unidade' : 'unidades'} de {product.name}{' '}
+            adicionada ao carrinho
+          </span>
+        )}
       </div>
     </div>
   );

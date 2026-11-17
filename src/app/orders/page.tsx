@@ -15,13 +15,24 @@ const statusLabel: Record<string, string> = {
 };
 
 const statusColor: Record<string, string> = {
-  PENDING: 'bg-yellow-500/10 text-yellow-400',
-  CONFIRMED: 'bg-blue-500/10 text-blue-400',
-  PAID: 'bg-green-500/10 text-green-400',
-  SHIPPED: 'bg-purple-500/10 text-purple-400',
-  DELIVERED: 'bg-emerald-500/10 text-emerald-400',
-  CANCELLED: 'bg-red-500/10 text-red-400',
+  PENDING: 'bg-warning/10 text-warning',
+  CONFIRMED: 'bg-accent/10 text-accent',
+  PAID: 'bg-success/10 text-success',
+  SHIPPED: 'bg-accent/10 text-accent',
+  DELIVERED: 'bg-success/10 text-success',
+  CANCELLED: 'bg-danger/10 text-danger',
 };
+
+function safePage(pageParam: string | undefined): number {
+  const n = Number(pageParam);
+  if (!Number.isFinite(n) || !Number.isInteger(n) || n < 1) return 1;
+  return n;
+}
+
+function safeString(value: string | undefined, maxLen = 100): string {
+  if (!value) return '';
+  return value.slice(0, maxLen);
+}
 
 export default async function OrdersPage({
   searchParams,
@@ -29,26 +40,39 @@ export default async function OrdersPage({
   searchParams: Promise<{ page?: string; customerId?: string; status?: string }>;
 }) {
   const params = await searchParams;
-  const page = Number(params.page ?? '1');
-  const customerId = params.customerId ?? '';
-  const status = params.status ?? '';
+  const page = safePage(params.page);
+  const customerId = safeString(params.customerId, 64);
+  const status = safeString(params.status, 20);
   const result = await listOrders({ page, pageSize: 10, customerId, status });
 
   return (
     <section className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Pedidos</h1>
-        <form className="flex flex-wrap gap-2" action="/orders">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Pedidos</h1>
+          <p className="mt-1 text-sm text-muted">
+            Acompanhe e filtre os pedidos realizados.
+          </p>
+        </div>
+        <form className="flex flex-wrap gap-2" action="/orders" role="search">
+          <label htmlFor="customerId" className="sr-only">
+            Filtrar por ID do cliente
+          </label>
           <input
+            id="customerId"
             name="customerId"
             defaultValue={customerId}
             placeholder="ID do cliente"
-            className="rounded border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-sm outline-none focus:border-violet-500"
+            className="input w-full sm:w-auto"
           />
+          <label htmlFor="status-filter" className="sr-only">
+            Filtrar por status
+          </label>
           <select
+            id="status-filter"
             name="status"
             defaultValue={status}
-            className="rounded border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-sm outline-none focus:border-violet-500"
+            className="input w-full sm:w-auto"
           >
             <option value="">Todos os status</option>
             <option value="PENDING">Pendente</option>
@@ -58,78 +82,113 @@ export default async function OrdersPage({
             <option value="DELIVERED">Entregue</option>
             <option value="CANCELLED">Cancelado</option>
           </select>
-          <button className="rounded bg-violet-600 px-3 py-1.5 text-sm text-white hover:bg-violet-500">
+          <button
+            type="submit"
+            className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-accent px-4 text-sm font-medium text-white transition hover:bg-accent-hover sm:w-auto"
+          >
             Filtrar
           </button>
         </form>
       </header>
 
       {result.data.length === 0 ? (
-        <p className="text-neutral-400">Nenhum pedido encontrado.</p>
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-line-strong bg-surface/50 px-6 py-16 text-center">
+          <span
+            aria-hidden
+            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-2 text-2xl"
+          >
+            📦
+          </span>
+          <p className="mt-4 font-medium">Nenhum pedido encontrado</p>
+          <p className="mt-1 max-w-sm text-sm text-muted">
+            {customerId || status
+              ? 'Tente ajustar os filtros aplicados.'
+              : 'Os pedidos realizados aparecerao aqui.'}
+          </p>
+        </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-neutral-800">
-          <table className="w-full text-sm">
-            <thead className="bg-neutral-900 text-left text-neutral-400">
-              <tr>
-                <th className="px-4 py-3">ID</th>
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Total</th>
-                <th className="px-4 py-3">Data</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {result.data.map((order) => (
-                <tr
-                  key={order.id}
-                  className="border-t border-neutral-800 hover:bg-neutral-900/50"
-                >
-                  <td className="px-4 py-3 font-mono text-xs">
-                    {order.id.slice(0, 8)}...
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs text-neutral-400">
-                    {order.customerId.slice(0, 8)}...
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        statusColor[order.status] ?? ''
-                      }`}
-                    >
-                      {statusLabel[order.status] ?? order.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 font-medium">
-                    {formatBRL(order.total)}
-                  </td>
-                  <td className="px-4 py-3 text-neutral-400">
-                    {formatDate(order.createdAt)}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/orders/${order.id}`}
-                      className="text-violet-400 hover:text-violet-300"
-                    >
-                      Detalhes
-                    </Link>
-                  </td>
+        <div className="overflow-hidden rounded-2xl border border-line shadow-card">
+          <div className="overflow-x-auto">
+            <table
+              className="w-full text-sm"
+              aria-label="Lista de pedidos"
+            >
+              <thead className="bg-surface text-left text-xs uppercase tracking-wide text-faint">
+                <tr>
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    ID
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    Cliente
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    Status
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    Total
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    Data
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    Acao
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {result.data.map((order) => (
+                  <tr
+                    key={order.id}
+                    className="border-t border-line transition hover:bg-surface-2/60"
+                  >
+                    <td className="px-4 py-3 font-mono text-xs">
+                      {order.id.slice(0, 8)}...
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-muted">
+                      {order.customerId.slice(0, 8)}...
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          statusColor[order.status] ?? ''
+                        }`}
+                      >
+                        {statusLabel[order.status] ?? order.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-medium tabular-nums">
+                      {formatBRL(order.total)}
+                    </td>
+                    <td className="px-4 py-3 text-muted">
+                      {formatDate(order.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/orders/${order.id}`}
+                        className="font-medium text-accent transition hover:text-accent-hover"
+                      >
+                        Detalhes
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
-      <Pagination
-        page={result.page}
-        totalPages={result.totalPages}
-        basePath="/orders"
-        searchParams={{
-          ...(customerId ? { customerId } : {}),
-          ...(status ? { status } : {}),
-        }}
-      />
+      {result.totalPages > 1 && (
+        <Pagination
+          page={result.page}
+          totalPages={result.totalPages}
+          basePath="/orders"
+          searchParams={{
+            ...(customerId ? { customerId } : {}),
+            ...(status ? { status } : {}),
+          }}
+        />
+      )}
     </section>
   );
 }

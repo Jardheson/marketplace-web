@@ -11,6 +11,8 @@ interface Props {
 
 export function Pagination({ page, totalPages, basePath, searchParams = {} }: Props) {
   const total = Math.max(1, totalPages);
+  const prevDisabled = page <= 1;
+  const nextDisabled = page >= total;
 
   function href(p: number) {
     const qs = new URLSearchParams(searchParams);
@@ -20,23 +22,53 @@ export function Pagination({ page, totalPages, basePath, searchParams = {} }: Pr
     return q ? `${basePath}?${q}` : basePath;
   }
 
+  const baseBtn =
+    'flex min-h-[44px] items-center justify-center rounded-xl border border-line px-4 text-sm font-medium transition';
+  const enabledBtn = 'hover:border-line-strong hover:bg-surface-2';
+  const disabledBtn = 'pointer-events-none opacity-40 cursor-not-allowed';
+
   return (
-    <nav className="flex items-center justify-between text-sm">
-      <Link
-        href={href(Math.max(1, page - 1))}
-        className="rounded border border-neutral-700 px-3 py-1.5 hover:bg-neutral-800"
-      >
-        Anterior
-      </Link>
-      <span className="text-neutral-400">
-        Pagina {page} de {total}
+    <nav
+      aria-label="Paginacao"
+      className="flex flex-wrap items-center justify-between gap-3 pt-2"
+    >
+      {prevDisabled ? (
+        <span
+          aria-disabled="true"
+          className={`${baseBtn} ${disabledBtn}`}
+        >
+          &larr; Anterior
+        </span>
+      ) : (
+        <Link
+          href={href(Math.max(1, page - 1))}
+          rel="prev"
+          className={`${baseBtn} ${enabledBtn}`}
+        >
+          &larr; Anterior
+        </Link>
+      )}
+      <span className="text-sm text-muted">
+        Pagina{' '}
+        <span className="font-medium text-ink tabular-nums">{page}</span> de{' '}
+        <span className="tabular-nums">{total}</span>
       </span>
-      <Link
-        href={href(Math.min(total, page + 1))}
-        className="rounded border border-neutral-700 px-3 py-1.5 hover:bg-neutral-800"
-      >
-        Proxima
-      </Link>
+      {nextDisabled ? (
+        <span
+          aria-disabled="true"
+          className={`${baseBtn} ${disabledBtn}`}
+        >
+          Proxima &rarr;
+        </span>
+      ) : (
+        <Link
+          href={href(Math.min(total, page + 1))}
+          rel="next"
+          className={`${baseBtn} ${enabledBtn}`}
+        >
+          Proxima &rarr;
+        </Link>
+      )}
     </nav>
   );
 }
