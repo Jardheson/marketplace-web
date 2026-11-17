@@ -41,6 +41,13 @@ operador em uma unica aplicacao Next.js, consumindo a API publica do backend.
 - Estados de carregamento com skeleton screens
 - Pagina de erro (error boundary) e pagina 404 customizadas
 
+## Aplicacao em producao
+
+- **Frontend (Vercel):** https://marketplace-web-8xzp.vercel.app/
+- **API (Railway):** https://imaginative-communication-production-ffd35873.up.railway.app
+- **Swagger/OpenAPI:** https://imaginative-communication-production-ffd35873.up.railway.app/api-docs
+- **Backend (GitHub):** https://github.com/Jardheson/marketplace-modular
+
 ## Stack
 
 - Next.js 15 (App Router, Server Components, Route Handlers)
@@ -193,9 +200,13 @@ nao foi cadastrada. As imagens locais seguem o padrao `{sku}.jpg` (minusculo).
 
 ## Deploy na Vercel
 
+A aplicacao esta publicada em **https://marketplace-web-8xzp.vercel.app/**.
+
+Para novos deploys:
+
 1. Importe este repositorio na Vercel
 2. Em **Settings -> Environment Variables**, defina `NEXT_PUBLIC_API_URL`
-   com a URL publica da API (ex: `https://imaginative-communication.up.railway.app`)
+   com a URL publica da API (ex: `https://imaginative-communication-production-ffd35873.up.railway.app`)
 3. Deploy automatico a cada push na `main`
 
 > Lembre-se de liberar o CORS no backend para o dominio da Vercel.

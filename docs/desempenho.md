@@ -70,6 +70,7 @@ Resultados verificados do frontend MERX (marketplace-web).
 - 8 rotas de pagina: `/`, `/products/[id]`, `/checkout`, `/orders`, `/orders/[id]`, `/payments`, `/metrics`, `/admin`
 - 4 Route Handlers de API: `/api/checkout`, `/api/payments`, `/api/catalog/categories`, `/api/catalog/products`
 - Todas respondem HTTP 200 (exceto 404 para rotas inexistentes)
+- O build lista 14 entradas: as 12 acima mais `/_not-found` e `/icon.svg`
 
 ## Responsividade
 
