@@ -101,6 +101,20 @@ export function createCategory(input: { name: string; description?: string }) {
   });
 }
 
+export function createProduct(input: {
+  name: string;
+  description?: string;
+  price: number;
+  stock: number;
+  categoryId: string;
+  sku: string;
+}) {
+  return request<Product>('/products', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
 export function formatBRL(cents: number) {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
