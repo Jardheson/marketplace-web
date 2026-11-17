@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { formatBRL } from '@/lib/api';
 import type { Product } from '@/lib/types';
 import { useCart } from './CartProvider';
+import { ProductImage } from './ProductImage';
 
 export function ProductDetail({ product }: { product: Product }) {
   const { add } = useCart();
@@ -13,12 +14,13 @@ export function ProductDetail({ product }: { product: Product }) {
   return (
     <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
       <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-surface-2 to-surface">
-        <span
-          aria-hidden
-          className="text-5xl font-semibold tracking-tight text-accent/70 sm:text-6xl lg:text-7xl"
-        >
-          {product.name.trim().slice(0, 2).toUpperCase()}
-        </span>
+        <ProductImage
+          name={product.name}
+          sku={product.sku}
+          imageUrl={product.imageUrl}
+          className="h-full w-full object-cover"
+          fallbackClassName="text-5xl font-semibold tracking-tight text-accent/70 sm:text-6xl lg:text-7xl"
+        />
       </div>
       <div className="flex flex-col gap-5">
         <div className="space-y-2">

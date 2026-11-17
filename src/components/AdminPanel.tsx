@@ -203,12 +203,16 @@ function ProductForm({
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
   const [sku, setSku] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [previewFailed, setPreviewFailed] = useState(false);
   const [categoryId, setCategoryId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createdName, setCreatedName] = useState<string | null>(null);
 
   const priceCents = Math.round(Number(price.replace(',', '.')) * 100);
+  const trimmedImageUrl = imageUrl.trim();
+  const imageUrlValid = /^https?:\/\/\S+$/i.test(trimmedImageUrl);
 
   function handleSelectCategory(id: string) {
     setCategoryId(id);
@@ -242,6 +246,10 @@ function ProductForm({
       setError('Informe o SKU.');
       return;
     }
+    if (trimmedImageUrl.length > 0 && !imageUrlValid) {
+      setError('URL da imagem invalida. Use http:// ou https://.');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -255,6 +263,7 @@ function ProductForm({
           stock: stockNumber,
           categoryId: categoryId.trim(),
           sku: sku.trim(),
+          imageUrl: trimmedImageUrl || undefined,
         }),
       });
       const data = await res.json();
@@ -266,6 +275,8 @@ function ProductForm({
       setPrice('');
       setStock('');
       setSku('');
+      setImageUrl('');
+      setPreviewFailed(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro inesperado');
     } finally {
@@ -348,6 +359,41 @@ function ProductForm({
           className="input mt-1.5"
         />
       </label>
+
+      <div className="space-y-2">
+        <label className="block text-sm">
+          <span className="text-muted">URL da imagem</span>
+          <input
+            type="url"
+            value={imageUrl}
+            onChange={(e) => {
+              setImageUrl(e.target.value);
+              setPreviewFailed(false);
+            }}
+            placeholder="https://exemplo.com/imagem.jpg"
+            className="input mt-1.5"
+          />
+        </label>
+
+        {imageUrlValid && !previewFailed && (
+          <div className="flex items-center gap-3 rounded-xl border border-line bg-surface-2 p-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={trimmedImageUrl}
+              alt={`Previa da imagem de ${name || 'produto'}`}
+              onError={() => setPreviewFailed(true)}
+              className="h-16 w-16 rounded-lg object-cover"
+            />
+            <span className="text-xs text-muted">Previa da imagem</span>
+          </div>
+        )}
+
+        {trimmedImageUrl.length > 0 && !imageUrlValid && (
+          <p className="text-xs text-danger">
+            Informe uma URL valida, iniciando com http:// ou https://.
+          </p>
+        )}
+      </div>
 
       <div className="space-y-2">
         <label className="block text-sm">

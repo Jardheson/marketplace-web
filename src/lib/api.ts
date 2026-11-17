@@ -108,6 +108,7 @@ export function createProduct(input: {
   stock: number;
   categoryId: string;
   sku: string;
+  imageUrl?: string;
 }) {
   return request<Product>('/products', {
     method: 'POST',

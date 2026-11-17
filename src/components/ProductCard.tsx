@@ -5,10 +5,7 @@ import { useState } from 'react';
 import { formatBRL } from '@/lib/api';
 import type { Product } from '@/lib/types';
 import { useCart } from './CartProvider';
-
-function initials(name: string) {
-  return name.trim().slice(0, 2).toUpperCase();
-}
+import { ProductImage } from './ProductImage';
 
 export function ProductCard({ product }: { product: Product }) {
   const { add } = useCart();
@@ -26,12 +23,13 @@ export function ProductCard({ product }: { product: Product }) {
         className="relative block"
       >
         <div className="flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-surface-2 to-surface">
-          <span
-            aria-hidden
-            className="text-3xl font-semibold tracking-tight text-accent/70 transition duration-300 group-hover:scale-105 sm:text-4xl"
-          >
-            {initials(product.name)}
-          </span>
+          <ProductImage
+            name={product.name}
+            sku={product.sku}
+            imageUrl={product.imageUrl}
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            fallbackClassName="text-3xl font-semibold tracking-tight text-accent/70 transition duration-300 group-hover:scale-105 sm:text-4xl"
+          />
           {outOfStock && (
             <span className="absolute left-3 top-3 rounded-full bg-canvas/80 px-2.5 py-1 text-xs font-medium text-muted backdrop-blur">
               Sem estoque

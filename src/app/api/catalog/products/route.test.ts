@@ -90,4 +90,26 @@ describe('POST /api/catalog/products - validacao de entrada', () => {
     const json = await res.json();
     expect(json.id).toBe('prod-1');
   });
+
+  it('rejeita URL de imagem invalida', async () => {
+    const res = await POST(makeRequest({ ...validBody, imageUrl: 'ftp://x/y.jpg' }));
+    expect(res.status).toBe(400);
+    expect(createProduct).not.toHaveBeenCalled();
+  });
+
+  it('repassa URL de imagem valida para a API', async () => {
+    vi.mocked(createProduct).mockResolvedValue({
+      id: 'prod-2',
+      name: 'Fone Bluetooth',
+    } as Product);
+
+    const res = await POST(
+      makeRequest({ ...validBody, imageUrl: 'https://cdn.exemplo.com/fone.jpg' }),
+    );
+
+    expect(res.status).toBe(201);
+    expect(createProduct).toHaveBeenCalledWith(
+      expect.objectContaining({ imageUrl: 'https://cdn.exemplo.com/fone.jpg' }),
+    );
+  });
 });

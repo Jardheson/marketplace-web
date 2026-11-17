@@ -4,6 +4,8 @@ import { createProduct } from '@/lib/api';
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const URL_REGEX = /^https?:\/\/\S+$/i;
+
 export async function POST(req: Request) {
   try {
     let body: unknown;
@@ -16,7 +18,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, description, price, stock, categoryId, sku } = (body ??
+    const { name, description, price, stock, categoryId, sku, imageUrl } = (body ??
       {}) as {
       name?: string;
       description?: string;
@@ -24,6 +26,7 @@ export async function POST(req: Request) {
       stock?: number;
       categoryId?: string;
       sku?: string;
+      imageUrl?: string;
     };
 
     if (!name || typeof name !== 'string' || name.trim().length < 2) {
@@ -63,6 +66,25 @@ export async function POST(req: Request) {
       );
     }
 
+    if (imageUrl !== undefined && imageUrl !== null) {
+      if (
+        typeof imageUrl !== 'string' ||
+        imageUrl.trim().length === 0 ||
+        imageUrl.trim().length > 500 ||
+        !URL_REGEX.test(imageUrl.trim())
+      ) {
+        return NextResponse.json(
+          {
+            error: {
+              code: 'BAD_REQUEST',
+              message: 'URL da imagem invalida (use http ou https, ate 500 caracteres)',
+            },
+          },
+          { status: 400 },
+        );
+      }
+    }
+
     const product = await createProduct({
       name: name.trim(),
       description: description?.trim() || undefined,
@@ -70,6 +92,7 @@ export async function POST(req: Request) {
       stock: stockNumber,
       categoryId,
       sku: sku.trim(),
+      imageUrl: typeof imageUrl === 'string' ? imageUrl.trim() : undefined,
     });
 
     return NextResponse.json(product, { status: 201 });
