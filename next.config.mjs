@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
+const isDev = process.env.NODE_ENV === 'development';
+
 const nextConfig = {
+  // Dev e build de producao usam diretorios distintos. Sem isso, rodar
+  // `next build` com o dev server ligado sobrescreve o cache do dev e gera
+  // o erro "ENOENT .next/server/pages/_document.js".
+  distDir: isDev ? '.next-dev' : '.next',
   reactStrictMode: true,
   poweredByHeader: false,
   eslint: {
