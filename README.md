@@ -7,6 +7,23 @@ hospedada no Railway.
 Interface 100% em portugues (pt-BR), responsiva de 320px a 4K e construida sobre
 um design system com tokens semanticos (cores, sombras e tipografia).
 
+## Nivel escolhido
+
+Nivel completo (fullstack frontend): o MERX entrega a jornada completa do cliente e do
+operador em uma unica aplicacao Next.js, consumindo a API publica do backend.
+
+- **Catalogo** com busca, paginacao e detalhe do produto
+- **Carrinho** persistente com remocao de itens
+- **Checkout** com 3 metodos de pagamento (PIX, Cartao de Credito, Boleto)
+- **Pedidos** (lista com filtros e detalhe do pedido)
+- **Pagamentos** (processamento manual por ID do pedido)
+- **Metricas** em tempo real (RED + pedidos + pagamentos)
+- **Admin** (criacao de categorias e produtos)
+- **BFF** via Route Handlers do Next.js (validacao, seguranca e sanitizacao de erros)
+- **Acessibilidade** WCAG 2.1 AA e **seguranca** com headers HTTP
+- **Testes** automatizados (58 testes em 9 arquivos)
+- **Deploy** na Vercel com CI verde
+
 ## Funcionalidades
 
 - Catalogo de produtos com busca e paginacao
@@ -14,6 +31,7 @@ um design system com tokens semanticos (cores, sombras e tipografia).
 - Carrinho persistente (localStorage) com remocao de itens no resumo do checkout
 - Checkout com 3 metodos de pagamento (PIX, Cartao de Credito, Boleto); o ID do
   cliente ja vem preenchido com um UUID de exemplo
+- Cadastro de imagem do produto (URL) no painel `/admin`, com previa e validacao
 - Lista de pedidos com filtros por cliente e status
 - Detalhe do pedido com itens e total
 - Painel de pagamentos (processamento manual por ID do pedido)
@@ -146,10 +164,25 @@ curl -X POST https://SEU-DOMINIO/api/v1/categories \
 
 curl -X POST https://SEU-DOMINIO/api/v1/products \
   -H "Content-Type: application/json" \
-  -d '{"name":"Fone Bluetooth","price":19990,"stock":50,"categoryId":"<ID>","sku":"SKU-001"}'
+  -d '{"name":"Fone Bluetooth","price":19990,"stock":50,"categoryId":"<ID>","sku":"SKU-001","imageUrl":"https://cdn.exemplo.com/fone.jpg"}'
 ```
 
 O campo `price` e um inteiro em centavos (`19990` = R$ 199,90).
+O campo `imageUrl` e opcional; quando omitido, o frontend usa o fallback descrito abaixo.
+
+## Imagens de produtos
+
+O componente `ProductImage` resolve a imagem em cascata, com fallback resiliente:
+
+1. `product.imageUrl` (URL informada no cadastro);
+2. `/products/{sku}.jpg` (imagem local em `public/products/`);
+3. iniciais do nome do produto (fallback final, sem quebrar o layout).
+
+Isso garante que nenhum card fique sem capa, mesmo quando a imagem quebra ou
+nao foi cadastrada. As imagens locais seguem o padrao `{sku}.jpg` (minusculo).
+
+> O atributo `alt` das imagens de produtos fica vazio (`alt=""`) quando o nome
+> do item ja esta adjacente em texto, evitando redundancia sonora (WCAG 2.1 AA).
 
 ## Variaveis de ambiente
 
