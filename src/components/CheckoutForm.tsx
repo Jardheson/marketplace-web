@@ -15,10 +15,12 @@ const methods: { value: PaymentMethod; label: string; icon: string }[] = [
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const DEFAULT_CUSTOMER_ID = 'c3f1a0e2-8b4d-4c6f-9a21-7d5e8f0b1a3c';
+
 export function CheckoutForm() {
-  const { items, total, clear } = useCart();
+  const { items, total, clear, remove } = useCart();
   const router = useRouter();
-  const [customerId, setCustomerId] = useState('');
+  const [customerId, setCustomerId] = useState(DEFAULT_CUSTOMER_ID);
   const [method, setMethod] = useState<PaymentMethod>('PIX');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -180,13 +182,34 @@ export function CheckoutForm() {
         <h2 className="mb-4 text-lg font-semibold">Resumo</h2>
         <ul className="space-y-3 text-sm">
           {items.map((item) => (
-            <li key={item.productId} className="flex justify-between gap-2">
-              <span className="text-muted">
+            <li
+              key={item.productId}
+              className="flex items-center justify-between gap-2"
+            >
+              <span className="min-w-0 flex-1 text-muted">
                 {item.quantity}x {item.name}
               </span>
               <span className="font-medium tabular-nums">
                 {formatBRL(item.unitPrice * item.quantity)}
               </span>
+              <button
+                type="button"
+                onClick={() => remove(item.productId)}
+                aria-label={`Remover ${item.name} do carrinho`}
+                className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-faint transition hover:bg-surface-2 hover:text-danger focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+              >
+                <svg
+                  aria-hidden
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-4 w-4"
+                >
+                  <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                  <path d="M10 11v6M14 11v6" />
+                </svg>
+              </button>
             </li>
           ))}
         </ul>

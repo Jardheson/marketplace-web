@@ -56,7 +56,9 @@ describe('CheckoutForm', () => {
     seedCart();
     renderForm();
 
-    await user.type(await screen.findByRole('textbox'), 'id-invalido');
+    const input = await screen.findByRole('textbox');
+    await user.clear(input);
+    await user.type(input, 'id-invalido');
     await user.click(screen.getByRole('button', { name: /finalizar pedido/i }));
 
     const alert = await screen.findByRole('alert');
@@ -75,7 +77,9 @@ describe('CheckoutForm', () => {
     seedCart();
     renderForm();
 
-    await user.type(await screen.findByRole('textbox'), UUID);
+    const input = await screen.findByRole('textbox');
+    await user.clear(input);
+    await user.type(input, UUID);
     await user.click(screen.getByRole('button', { name: /finalizar pedido/i }));
 
     await waitFor(() => expect(push).toHaveBeenCalled());
@@ -93,6 +97,19 @@ describe('CheckoutForm', () => {
     expect(push).toHaveBeenCalledWith(`/orders/${UUID}?payment=pay-1`);
   });
 
+  it('remove um item do carrinho ao clicar em excluir', async () => {
+    const user = userEvent.setup();
+    seedCart();
+    renderForm();
+
+    await user.click(
+      await screen.findByRole('button', { name: /remover cafe especial/i }),
+    );
+
+    expect(await screen.findByText('Seu carrinho esta vazio')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!)).toEqual([]);
+  });
+
   it('exibe a mensagem de erro retornada pela API', async () => {
     const user = userEvent.setup();
     vi.stubGlobal(
@@ -107,7 +124,9 @@ describe('CheckoutForm', () => {
     seedCart();
     renderForm();
 
-    await user.type(await screen.findByRole('textbox'), UUID);
+    const input = await screen.findByRole('textbox');
+    await user.clear(input);
+    await user.type(input, UUID);
     await user.click(screen.getByRole('button', { name: /finalizar pedido/i }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
