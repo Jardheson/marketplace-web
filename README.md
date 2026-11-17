@@ -11,8 +11,9 @@ um design system com tokens semanticos (cores, sombras e tipografia).
 
 - Catalogo de produtos com busca e paginacao
 - Detalhe do produto com controle de quantidade
-- Carrinho persistente (localStorage)
-- Checkout com 3 metodos de pagamento (PIX, Cartao de Credito, Boleto)
+- Carrinho persistente (localStorage) com remocao de itens no resumo do checkout
+- Checkout com 3 metodos de pagamento (PIX, Cartao de Credito, Boleto); o ID do
+  cliente ja vem preenchido com um UUID de exemplo
 - Lista de pedidos com filtros por cliente e status
 - Detalhe do pedido com itens e total
 - Painel de pagamentos (processamento manual por ID do pedido)
@@ -53,6 +54,7 @@ A aplicacao ficara disponivel em http://localhost:3000
 | `npm run lint`     | Executa o ESLint                                 |
 | `npm test`         | Executa os testes em modo watch                  |
 | `npm run test:run` | Executa os testes uma vez (uso em CI)            |
+| `npm run seed:api` | Popula o catalogo via API (idempotente por SKU)  |
 
 ## Testes
 
@@ -91,7 +93,7 @@ npm run test:run
 
 ## Como popular o catalogo
 
-Ha duas formas de criar categorias e produtos. A ordem obrigatoria e sempre:
+Ha quatro formas de criar categorias e produtos. A ordem obrigatoria e sempre:
 **criar categoria -> criar produto** (a API rejeita produto sem categoria valida
 e SKU duplicado).
 
@@ -113,9 +115,29 @@ npm run seed
 > ATENCAO: o seed executa TRUNCATE em todas as tabelas antes de inserir os
 > dados. Ele apaga tudo o que existir. Nao rode o seed em producao (Railway).
 
-### 3. Em producao (Railway)
+### 3. Pela API com o script `npm run seed:api`
 
-Nao use o seed. Crie os registros pela tela `/admin` ou diretamente pela API:
+O script `scripts/seed-api.mjs` cria uma categoria e 36 produtos chamando a API
+publica. Diferente do seed do backend, ele:
+
+- NAO acessa o banco diretamente;
+- NAO executa TRUNCATE (nao apaga nada);
+- e idempotente por SKU (produto ja existente e ignorado);
+- reutiliza a categoria existente nas execucoes seguintes.
+
+Por isso e seguro rodar tambem em producao (Railway):
+
+```bash
+# usa NEXT_PUBLIC_API_URL do .env.local
+npm run seed:api
+
+# ou informa a URL explicitamente
+npm run seed:api -- --url=https://SEU-DOMINIO.up.railway.app
+```
+
+### 4. Manualmente pela API (curl)
+
+Tambem e possivel criar os registros pela tela `/admin` ou diretamente pela API:
 
 ```bash
 curl -X POST https://SEU-DOMINIO/api/v1/categories \
@@ -148,6 +170,9 @@ O campo `price` e um inteiro em centavos (`19990` = R$ 199,90).
 ## Estrutura
 
 ```
+scripts/
+└── seed-api.mjs                 # Seed do catalogo via API (idempotente)
+
 src/
 ├── app/
 │   ├── admin/                   # Painel de administracao do catalogo
